@@ -7,9 +7,9 @@ project must implement.
 
 |#
 
+(require "konffaa/axiom.rkt")
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
-(require rackunit)
 
 ;;; 
 ;;; base variants
@@ -31,14 +31,13 @@ project must implement.
   (define/public (major-version.attr) 0)
   
   (define/public (major-version.axiom)
-    (check-true (>= (major-version.attr) 0)))
+    (assert (>= (major-version.attr) 0)))
   
   (define/public (minor-version.attr) 1)
 
   (define/public (minor-version.axiom)
-    (check-true (and
-                 (>= (minor-version.attr) 0)
-                 (< (minor-version.attr) 100))))
+    (assert (>= (minor-version.attr) 0))
+    (assert (< (minor-version.attr) 100) "minor version too large"))
   
   (define/public (version100.attr)
     (+ (* (major-version.attr) 100) (minor-version.attr)))
@@ -85,6 +84,13 @@ project must implement.
     (or (with-qt-network.attr)
         (with-qt-mobility.attr)))
 
+  (define/public (with-qt.axiom)
+    (assert (implies
+             (or (with-qt-network.attr)
+                 (with-qt-mobility.attr))
+             (with-qt.attr))
+            "Qt components require Qt"))
+  
   (define/public (with-qmake.attr)
     (with-qt.attr))
 
@@ -181,6 +187,11 @@ project must implement.
   
   (define/public (kit-vernum.attr) 52)
 
+  (define/public (platform-vs-kit.axiom)
+    (assert
+     (iff (< (kit-vernum.attr) 30)
+          (< (s60-vernum.attr) 30))))
+  
   (define/public (kit-name.attr)
     (format "s60_~a" (kit-vernum.attr)))
 

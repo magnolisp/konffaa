@@ -2,22 +2,22 @@
 
 #|
 
-You may use (call-method object method-name) to test an axiom. You may
-find check-not-false of rackunit useful in defining assertions within
-axioms. In some cases, instead of axioms, you may want to simply
-declare attribute getters as final to ensure they always have a
-certain kind of value for a given subset of configurations.
+At the lowest levels of abstraction you may use (call-method object
+method-name) to test an axiom. We also build a basic testing facility
+on top. We do not use 'rackunit' for testing, as it does not appear
+designed to deal with tests as values, which we may want to do here.
+We also do not require "expect" type statements, as configuration
+axioms deal with relations.
 
-The 'rackunit' module exports a 'test-case?' predicate, but quickly
-glancing through the documentation could not see anything that would
-allow test case objects to be constructed. Hence the use of
-rackunit/private/base to create such objects directly.
+In some cases, instead of axioms, you may want to simply declare
+attribute getters as final to ensure they always have a certain kind
+of value for a given subset of configurations. Then already any
+attempt to override will cause an error, even before we get to
+testing.
 
 |#
 
 (require "util.rkt")
-(require rackunit)
-(require (only-in rackunit/private/base rackunit-test-case))
 
 ;; symbol -> symbol
 (define (to-method-name axiom-name)
@@ -51,20 +51,56 @@ rackunit/private/base to create such objects directly.
    #hasheq()
    (object-axioms/list object)))
 
-(define* (object->test-suite object suite-desc)
-  (make-test-suite
-   suite-desc
-   (let ((axioms (object-axioms/list/sorted object)))
-     (map
-      (lambda (x)
-        (define an (symbol->string (first x)))
-        (define mn (second x))
-        (rackunit-test-case an
-                            (thunk
-                             (parameterize ((current-test-name an))
-                               (call-method object mn)))))
-      axioms))))
-;;with-check-info*
+;;; 
+;;; testing
+;;; 
+
+(struct	assertion-failed (f m) #:transparent)
+
+(define (check-not-false expr form msg)
+  (unless expr
+    (raise (assertion-failed form msg))))
+
+(define-syntax* assert
+  (syntax-rules ()
+    ((_ e)
+     (assert e #f))
+    ((_ e msg)
+     (check-not-false e (quote e) msg))))
+
+(define-syntax-rule* (implies x y)
+  (or (not x) y))
+
+(define-syntax-rule* (iff x y)
+  (or (and x y)
+      (not (or x y))))
+
+(define* (run-axiom-based-tests object suite-desc)
+  (define axioms (object-axioms/list/sorted object))
+  (define num-all (length axioms))
+  (define num-failed 0)
+  (for-each
+   (lambda (x)
+     (define an (symbol->string (first x)))
+     (define mn (second x))
+     (with-handlers
+         ((assertion-failed?
+           (lambda (ex)
+             (set! num-failed (+ num-failed 1))
+             (printfln "failed test")
+             (printfln "      axiom: ~a" an)
+             (printfln "  assertion: ~a"
+                       (or
+                        (assertion-failed-m ex)
+                        (assertion-failed-f ex))))))
+       (call-method object mn)))
+   axioms)
+  (when (> num-failed 0)
+    (printfln "there are ~a (of ~a) untrue axioms in ~a"
+              num-failed num-all suite-desc)
+    (error "aborted"))
+  (printfln "all ~a axioms hold for ~a" num-all suite-desc)
+  (void))
 
 #|
 
