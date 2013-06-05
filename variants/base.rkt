@@ -9,6 +9,7 @@ project must implement.
 
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
+(require rackunit)
 
 ;;; 
 ;;; base variants
@@ -29,7 +30,15 @@ project must implement.
 
   (define/public (major-version.attr) 0)
   
+  (define/public (major-version.axiom)
+    (check-true (>= (major-version.attr) 0)))
+  
   (define/public (minor-version.attr) 1)
+
+  (define/public (minor-version.axiom)
+    (check-true (and
+                 (>= (minor-version.attr) 0)
+                 (< (minor-version.attr) 100))))
   
   (define/public (version100.attr)
     (+ (* (major-version.attr) 100) (minor-version.attr)))
@@ -224,14 +233,14 @@ project must implement.
   
   ;; tools and libraries...
   
-  (define/public (with-gnupoc.attr) #t)
+  (define/public-final (with-gnupoc.attr) #t)
 
   ;; qmake and Symbian is a possible combination, but not necessarily
   ;; ideal, except perhaps to find out the library dependencies.
   ;; Without qmake need manual moc'king, though.
-  (define/override (with-qmake.attr) #f)
+  (define/override-final (with-qmake.attr) #f)
 
-  (define/public (with-sbsv1.attr) #t)
+  (define/public-final (with-sbsv1.attr) #t)
 
   (define/public (gcc-name.attr) "default")
   

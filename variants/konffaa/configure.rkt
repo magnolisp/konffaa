@@ -7,10 +7,12 @@ A configuration tool. Derived from ContextLogger2's Konffaile tool.
 |#
 
 (require "class-attr.rkt")
+(require "class-axiom.rkt")
 (require "util.rkt")
 (require "variant.rkt")
 (require "writer.rkt")
 (require racket/cmdline)
+(require rackunit/text-ui)
 
 ;; --------------------------------------------------
 ;; variant management
@@ -79,6 +81,8 @@ A configuration tool. Derived from ContextLogger2's Konffaile tool.
          (varinfo (varinfo-f))
          (set-name (class-field-mutator variant% name)))
     (set-name varinfo (string->symbol varname))
+
+    (run-tests (object->test-suite varinfo varname))
 
     (write-variant-config varinfo)
     (write-variant-symlink varname)
