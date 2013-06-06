@@ -1,4 +1,4 @@
-#lang racket
+#lang s-exp "konffaa/single-variant.rkt"
 
 #|
 
@@ -7,17 +7,7 @@ to export data. Builds Lua from source.
 
 |#
 
-(require "base.rkt")
-(require "konffaa/util.rkt")
-(require "konffaa/variant.rkt")
+(super-from "cxx-mock.var.rkt")
 
-(require (only-in "cxx-mock.var.rkt" (klass% super-variant%)))
-
-(define-variant* klass%
-  super-variant%
-  (super-new)
-    
-  (define/override (lua-link-as.attr)
-    'source-code)
-
-  )
+(define/override (lua-link-as.attr)
+  'source-code)

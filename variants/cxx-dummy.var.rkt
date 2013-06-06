@@ -1,4 +1,4 @@
-#lang racket
+#lang s-exp "konffaa/single-variant.rkt"
 
 #|
 
@@ -8,10 +8,5 @@ to export data.
 |#
 
 (require "base.rkt")
-(require "konffaa/util.rkt")
-(require "konffaa/variant.rkt")
 
-(define-variant*/default
-  project-variant%
-  (super-new)
-  ) ;; end class
+(super-is project-variant%)
