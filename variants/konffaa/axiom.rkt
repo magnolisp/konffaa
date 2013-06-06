@@ -19,6 +19,81 @@ testing.
 
 (require "util.rkt")
 
+;;; 
+;;; axiom implementation
+;;; 
+
+(struct	assertion-failed (f m) #:transparent)
+
+(define (check-not-false expr form msg)
+  (unless expr
+    (raise (assertion-failed form msg))))
+
+(define-syntax* assert
+  (syntax-rules ()
+    ((_ e)
+     (assert e #f))
+    ((_ e msg)
+     (check-not-false e (quote e) msg))))
+
+;; 'implies' is already defined in Racket.
+(define-syntax-rule* (iff x y)
+  (or (and x y)
+      (not (or x y))))
+
+;;; 
+;;; axiom declaration sugar
+;;; 
+
+(begin-for-syntax
+ (require racket/syntax)
+ (define (make-axiom-method-id ctx an-stx)
+   (format-id ctx #:source an-stx
+              "~a.axiom" (syntax-e an-stx))))
+
+(define-syntax-rule
+  (sub-define-axiom kind name e ...)
+  (begin
+    (define name (lambda () e ...))
+    (kind name)))
+
+;; E.g.
+;; (define-axiom public it-holds (assert ...))
+;; (define-axiom override it-holds (assert ...))
+;; (define-axiom public-final it-holds (assert ...))
+;; (define-axiom override-final it-holds (assert ...))
+(define-syntax* (define-axiom stx)
+  (syntax-case stx ()
+    ((_ kind an e ...)
+     (identifier? #'an)
+     (let ((mn (make-axiom-method-id stx #'an)))
+       #`(sub-define-axiom kind #,mn e ...)))))
+
+;; For defining alternative syntax for axiom declarations.
+(define-for-syntax (make-define-axiom kind-stx)
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ an e ...)
+       (identifier? #'an)
+       (let ((mn (make-axiom-method-id stx #'an)))
+         #`(sub-define-axiom #,kind-stx #,mn e ...))))))
+
+(define-syntax* introduce-axiom
+  (make-define-axiom #'public))
+
+(define-syntax* override-axiom
+  (make-define-axiom #'override))
+
+(define-syntax* introduce-axiom/final
+  (make-define-axiom #'public-final))
+
+(define-syntax* override-axiom/final
+  (make-define-axiom #'override-final))
+
+;;; 
+;;; testing
+;;; 
+
 ;; symbol -> symbol
 (define (to-method-name axiom-name)
   (string->symbol
@@ -50,30 +125,6 @@ testing.
      (hash-set res k v))
    #hasheq()
    (object-axioms/list object)))
-
-;;; 
-;;; testing
-;;; 
-
-(struct	assertion-failed (f m) #:transparent)
-
-(define (check-not-false expr form msg)
-  (unless expr
-    (raise (assertion-failed form msg))))
-
-(define-syntax* assert
-  (syntax-rules ()
-    ((_ e)
-     (assert e #f))
-    ((_ e msg)
-     (check-not-false e (quote e) msg))))
-
-(define-syntax-rule* (implies x y)
-  (or (not x) y))
-
-(define-syntax-rule* (iff x y)
-  (or (and x y)
-      (not (or x y))))
 
 (define* (run-axiom-based-tests object suite-desc)
   (define axioms (object-axioms/list/sorted object))

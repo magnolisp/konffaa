@@ -14,11 +14,11 @@ Example:
 
 |#
 
-(require racket "util.rkt" "variant.rkt")
+(require racket "axiom.rkt" "util.rkt" "variant.rkt")
 
 (provide (rename-out (module-begin #%module-begin))
          (except-out (all-from-out racket) #%module-begin)
-         (all-from-out "util.rkt" "variant.rkt"))
+         (all-from-out "axiom.rkt" "util.rkt" "variant.rkt"))
 
 (define-syntax (module-begin stx)
   (syntax-case stx ()

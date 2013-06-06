@@ -28,16 +28,15 @@ project must implement.
 
   (define/public (vendor-name.attr) "BLDL")
 
-  (define/public (major-version.attr) 0)
-  
-  (define/public (major-version.axiom)
-    (assert (>= (major-version.attr) 0)))
-  
-  (define/public (minor-version.attr) 1)
+  (define-attr public major-version 0)
+  (define-attr public minor-version 1)
 
-  (define/public (minor-version.axiom)
-    (assert (>= (minor-version.attr) 0))
-    (assert (< (minor-version.attr) 100) "minor version too large"))
+  (declare-attr major-version minor-version)
+
+  (introduce-axiom version-is-valid
+    (assert (>= major-version 0))
+    (assert (>= minor-version 0))
+    (assert (< minor-version 100) "minor version too large"))
   
   (define/public (version100.attr)
     (+ (* (major-version.attr) 100) (minor-version.attr)))

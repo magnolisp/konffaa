@@ -104,6 +104,27 @@ instantiation attempt.
      (let ((mn (make-attr-method-id stx #'an)))
        #`(sub-define-attr kind #,mn e ...)))))
 
+;; For defining alternative syntax for attribute declarations.
+(define-for-syntax (make-define-attr kind-stx)
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ an e ...)
+       (identifier? #'an)
+       (let ((mn (make-attr-method-id stx #'an)))
+         #`(sub-define-attr #,kind-stx #,mn e ...))))))
+
+(define-syntax* introduce-attr
+  (make-define-attr #'public))
+
+(define-syntax* override-attr
+  (make-define-attr #'override))
+
+(define-syntax* introduce-attr/final
+  (make-define-attr #'public-final))
+
+(define-syntax* override-attr/final
+  (make-define-attr #'override-final))
+
 ;; This macro defines, for the specified attribute(s), a class local
 ;; assignment transformer binding that makes it possible to directly
 ;; use the attribute name in expressions. Order of declaration does
@@ -135,27 +156,6 @@ instantiation attempt.
                             (id (identifier? #'id) #'(send this #,mn))))))))
                an-lst)))
        #`(begin #,@def-lst)))))
-
-;; For defining alternative syntax for attribute declarations.
-(define-for-syntax (make-define-attr kind-stx)
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ an e ...)
-       (identifier? #'an)
-       (let ((mn (make-attr-method-id stx #'an)))
-         #`(sub-define-attr #,kind-stx #,mn e ...))))))
-
-(define-syntax* introduce-attr
-  (make-define-attr #'public))
-
-(define-syntax* override-attr
-  (make-define-attr #'override))
-
-(define-syntax* introduce-attr/final
-  (make-define-attr #'public-final))
-
-(define-syntax* override-attr/final
-  (make-define-attr #'override-final))
 
 #|
 
