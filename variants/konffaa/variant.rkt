@@ -17,6 +17,10 @@ To avoid duplication in specifications, inheritance is supported.
 spec should be an instance of a subclass of variant%. Macros are
 provided for making it easier to define such subclasses.
 
+If you forget to invoke 'super-instantiate' or 'super-new' in you
+'variant%' subclass, you will get a descriptive error message upon
+instantiation attempt.
+
 |#
 
 (require "util.rkt")
@@ -72,10 +76,71 @@ provided for making it easier to define such subclasses.
      (let ((name (datum->syntax stx 'klass%)))
        #`(define-variant* #,name super body ...)))))
 
+(begin-for-syntax
+ (require racket/syntax)
+ (define (make-attr-method-id ctx an-stx)
+   (format-id ctx #:source an-stx
+              "~a.attr" (syntax-e an-stx))))
+
+;; We use promises to memoize, which works fine here as there are no
+;; arguments. Due to hygiene, the name 'v' (to which the promise is
+;; bound) cannot be referenced outside the macro.
+(define-syntax-rule
+  (sub-define-attr kind name e ...)
+  (begin
+    (define v (delay e ...))
+    (define name (lambda () (force v)))
+    (kind name)))
+
+;; E.g.
+;; (define-attr public feature-x #f)
+;; (define-attr override feature-x #t)
+;; (define-attr public-final feature-y #t)
+;; (define-attr override-final feature-x #f)
+(define-syntax* (define-attr stx)
+  (syntax-case stx ()
+    ((_ kind an e ...)
+     (identifier? #'an)
+     (let ((mn (make-attr-method-id stx #'an)))
+       #`(sub-define-attr kind #,mn e ...)))))
+
+;; This macro defines, for the specified attribute(s), a class local
+;; assignment transformer binding that makes it possible to directly
+;; use the attribute name in expressions. Order of declaration does
+;; not matter, as all member names are in scope when evaluating
+;; expressions giving values for members.
+;;
+;; E.g.
+;; (define k%
+;;   (class object%
+;;     (super-new)
+;;     (declare-attr c d)
+;;     (define/public (c.attr) 6)
+;;     (define/public (d.attr) (+ 1 c))
+;;     ))
+(define-syntax* (declare-attr stx)
+  (syntax-case stx ()
+    ((_ an ...)
+     (let* ((an-lst (syntax->list #'(an ...)))
+            (def-lst
+              (map
+               (lambda (an)
+                 (unless (identifier? an)
+                   (error 'declare-attr "expected identifier, got ~s" an))
+                 (let ((mn (make-attr-method-id stx an)))
+                   #`(define-syntax #,an
+                       (make-set!-transformer
+                        (lambda (stx)
+                          (syntax-case stx ()
+                            (id (identifier? #'id) #'(send this #,mn))))))))
+               an-lst)))
+       #`(begin #,@def-lst)))))
+
 #|
 
-Copyright 2009 Helsinki Institute for Information Technology (HIIT)
-and the authors. All rights reserved.
+Copyright 2009-2013 Helsinki Institute for Information
+Technology (HIIT), University of Bergen, and the authors. All rights
+reserved.
 
 Authors: Tero Hasu <tero.hasu@hut.fi>
 
