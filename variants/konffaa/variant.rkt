@@ -136,6 +136,27 @@ instantiation attempt.
                an-lst)))
        #`(begin #,@def-lst)))))
 
+;; For defining alternative syntax for attribute declarations.
+(define-for-syntax (make-define-attr kind-stx)
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ an e ...)
+       (identifier? #'an)
+       (let ((mn (make-attr-method-id stx #'an)))
+         #`(sub-define-attr #,kind-stx #,mn e ...))))))
+
+(define-syntax* introduce-attr
+  (make-define-attr #'public))
+
+(define-syntax* override-attr
+  (make-define-attr #'override))
+
+(define-syntax* introduce-attr/final
+  (make-define-attr #'public-final))
+
+(define-syntax* override-attr/final
+  (make-define-attr #'override-final))
+
 #|
 
 Copyright 2009-2013 Helsinki Institute for Information
