@@ -76,8 +76,10 @@ A configuration tool. Derived from ContextLogger2's Konffaile tool.
   (define-values (varname varfile)
     (resolve-variant vararg))
   
-  (let* ((varinfo-f (dynamic-require (path->string varfile) 'info))
-         (varinfo (varinfo-f))
+  (let* ((varinfo-class (dynamic-require
+                         (path->string varfile)
+                         'klass%))
+         (varinfo (new varinfo-class))
          (set-name (class-field-mutator variant% name)))
     (set-name varinfo (string->symbol varname))
 

@@ -16,24 +16,20 @@ and hence lacks QHttpPart.
 
 (require (only-in "harmattan-console.var.rkt" (klass% parent%)))
 
-(define* klass%
-   (variant-class
-    parent%
-    (super-new)
+(define-variant* klass%
+  parent%
+  (super-new)
     
-    (define/override (feature-qt-contacts.attr)
-      #f)
+  (define/override (feature-qt-contacts.attr)
+    #f)
+  
+  (define/override (feature-http-post.attr)
+    #t)
     
-    (define/override (feature-http-post.attr)
-      #t)
-    
-    (define/override (lua-export-script.attr)
-      "contact_to_xml.lua")
+  (define/override (lua-export-script.attr)
+    "contact_to_xml.lua")
+  
+  (define/override (component-datasrc.attr)
+    'datasrc-mock)
 
-    (define/override (component-datasrc.attr)
-      'datasrc-mock)
-
-    )) ;; end class
-
-(define* (info)
-  (new klass%)) 
+  )

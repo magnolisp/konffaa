@@ -12,19 +12,15 @@ Creates a console to show possible error output.
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
 
-(define* klass%
-   (variant-class
-    symbian-variant%
-    (super-new)
+(define-variant* klass%
+  symbian-variant%
+  (super-new)
 
-    (define/override (component-datasrc.attr)
-      'datasrc-mock)
+  (define/override (component-datasrc.attr)
+    'datasrc-mock)
 
-    ;; works with these but with numerous warnings
-    ;;(define/override (gcc-name.attr) "gcce-2011.09")
-    ;;(define/override (gcc-cxx-flags.attr) '("-std=c++0x"))
+  ;; works with these but with numerous warnings
+  ;;(define/override (gcc-name.attr) "gcce-2011.09")
+  ;;(define/override (gcc-cxx-flags.attr) '("-std=c++0x"))
   
-    )) ;; end class
-
-(define* (info)
-  (new klass%)) 
+  )

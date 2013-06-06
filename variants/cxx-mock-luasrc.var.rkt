@@ -13,15 +13,11 @@ to export data. Builds Lua from source.
 
 (require (only-in "cxx-mock.var.rkt" (klass% super-variant%)))
 
-(define* klass%
-   (variant-class
-    super-variant%
-    (super-new)
+(define-variant* klass%
+  super-variant%
+  (super-new)
     
-    (define/override (lua-link-as.attr)
-      'source-code)
+  (define/override (lua-link-as.attr)
+    'source-code)
 
-    )) ;; end class
-
-(define* (info)
-  (new klass%)) 
+  )

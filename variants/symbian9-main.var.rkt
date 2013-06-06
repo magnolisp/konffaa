@@ -15,21 +15,17 @@ something to launch it.
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
 
-(define* klass%
-   (variant-class
-    symbian-variant%
-    (super-new)
+(define-variant*/default
+  symbian-variant%
+  (super-new)
 
-    (define/override (feature-console.attr)
-      #f)
+  (define/override (feature-console.attr)
+    #f)
 
-    (define/override (feature-icon.attr)
-      #f)
+  (define/override (feature-icon.attr)
+    #f)
 
-    (define/override (component-datasrc.attr)
-      'datasrc-mock)
+  (define/override (component-datasrc.attr)
+    'datasrc-mock)
 
-    )) ;; end class
-
-(define* (info)
-  (new klass%)) 
+  ) ;; end class

@@ -14,21 +14,18 @@ apparently.
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
 
-(define* klass%
-   (variant-class
-    project-variant%
-    (super-new)
-    
-    (define/override (platform)
-      'qt-simulator)
-    
-    (define/override (feature-qt-contacts.attr)
-      #t)
-  
-    (define/override (component-ui.attr)
-      'ui-qtconsole)
-    
-    )) ;; end class
+(define-variant* klass%
+  project-variant%
 
-(define* (info)
-  (new klass%)) 
+  (super-new)
+    
+  (define/override (platform)
+    'qt-simulator)
+    
+  (define/override (feature-qt-contacts.attr)
+    #t)
+  
+  (define/override (component-ui.attr)
+    'ui-qtconsole)
+    
+  ) ;; end class

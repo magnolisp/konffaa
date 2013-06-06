@@ -12,27 +12,23 @@ This variant is handy for testing uploading on the PC.
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
 
-(define* klass%
-   (variant-class
-    project-variant%
-    (super-new)
-    
-    (define/override (with-qt.attr)
-      #t)
+(define-variant*/default
+  project-variant%
+  (super-new)
   
-    (define/override (feature-http-post.attr)
-      #t)
-    
-    (define/override (lua-export-script.attr)
-      "contact_to_xml.lua")
+  (define/override (with-qt.attr)
+    #t)
+  
+  (define/override (feature-http-post.attr)
+    #t)
+  
+  (define/override (lua-export-script.attr)
+    "contact_to_xml.lua")
 
-    (define/override (component-datasrc.attr)
-      'datasrc-mock)
+  (define/override (component-datasrc.attr)
+    'datasrc-mock)
 
-    (define/override (component-ui.attr)
-      'ui-qtconsole)
-    
-    )) ;; end class
-
-(define* (info)
-  (new klass%)) 
+  (define/override (component-ui.attr)
+    'ui-qtconsole)
+  
+  )

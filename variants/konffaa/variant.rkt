@@ -21,6 +21,8 @@ provided for making it easier to define such subclasses.
 
 (require "util.rkt")
 
+(define-struct* hexnum (num))
+
 (define* current-variant (make-parameter #f))
 
 ;; There is nothing here really, as a variant specification really is
@@ -55,9 +57,7 @@ provided for making it easier to define such subclasses.
   (syntax-rules ()
     ((_ name super body ...)
      (define name
-       (class super
-         (inspect #f)
-         body ...)))))
+       (variant-class super body ...)))))
 
 (define-syntax* define-variant*
   (syntax-rules ()
@@ -66,7 +66,11 @@ provided for making it easier to define such subclasses.
        (define-variant name rest ...)
        (provide name)))))
 
-(define-struct* hexnum (num))
+(define-syntax* (define-variant*/default stx)
+  (syntax-case stx ()
+    ((_ super body ...)
+     (let ((name (datum->syntax stx 'klass%)))
+       #`(define-variant* #,name super body ...)))))
 
 #|
 

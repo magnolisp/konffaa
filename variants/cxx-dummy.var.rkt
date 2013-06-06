@@ -11,11 +11,7 @@ to export data.
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
 
-(define* klass%
-   (variant-class
-    project-variant%
-    (super-new)
-    )) ;; end class
-
-(define* (info)
-  (new klass%)) 
+(define-variant*/default
+  project-variant%
+  (super-new)
+  ) ;; end class

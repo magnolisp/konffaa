@@ -13,30 +13,26 @@ available.
 (require "konffaa/util.rkt")
 (require "konffaa/variant.rkt")
 
-(define* klass%
-   (variant-class
-    project-variant%
-    (super-new)
-    
-    (define/override (platform)
-      'harmattan)
-    
-    (define/override (feature-qt-contacts.attr)
-      #t)
+(define-variant*/default
+  project-variant%
+  (super-new)
   
-    (define/override (lua-link-as.attr)
-      'source-code)
-    
-    (define/override (lua-script-path.attr)
-      "/opt/anyxporter/scripts/")
+  (define/override (platform)
+    'harmattan)
+  
+  (define/override (feature-qt-contacts.attr)
+    #t)
+  
+  (define/override (lua-link-as.attr)
+    'source-code)
+  
+  (define/override (lua-script-path.attr)
+    "/opt/anyxporter/scripts/")
 
-    (define/override (lua-export-script.attr)
-      "qt_contact_to_xml.lua")
+  (define/override (lua-export-script.attr)
+    "qt_contact_to_xml.lua")
 
-    (define/override (component-ui.attr)
-      'ui-qtconsole)
-    
-    )) ;; end class
-
-(define* (info)
-  (new klass%)) 
+  (define/override (component-ui.attr)
+    'ui-qtconsole)
+  
+  ) ;; end class
