@@ -9,5 +9,4 @@ to export data. Builds Lua from source.
 
 (super-from "cxx-mock.var.rkt")
 
-(define/override (lua-link-as.attr)
-  'source-code)
+(override-attr lua-link-as 'source-code)

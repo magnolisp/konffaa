@@ -157,6 +157,13 @@ instantiation attempt.
                an-lst)))
        #`(begin #,@def-lst)))))
 
+(define-syntax* (attr stx)
+  (syntax-case stx ()
+    ((_ name)
+     (identifier? #'name)
+     (let ((mn (make-attr-method-id stx #'name)))
+       #`(send this #,mn)))))
+
 #|
 
 Copyright 2009-2013 Helsinki Institute for Information

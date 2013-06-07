@@ -12,6 +12,11 @@ Example:
 (super-is symbian-variant%) OR (super-from "symbian.var.rkt")
 <attributes and other class members>
 
+Limitation: This implementation does not allow the use of macros to
+introduce the required super declaration. E.g., the 'racket/unit'
+language shows how 'local-expand' could be used to remove such
+limitations.
+
 |#
 
 (require racket "axiom.rkt" "util.rkt" "variant.rkt")

@@ -39,7 +39,7 @@ project must implement.
     (assert (< minor-version 100) "minor version too large"))
   
   (define/public (version100.attr)
-    (+ (* (major-version.attr) 100) (minor-version.attr)))
+    (+ (* (attr major-version) 100) (attr minor-version)))
   
   (define/public (version-string.attr)
     (real->decimal-string
