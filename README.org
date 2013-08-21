@@ -52,3 +52,12 @@ console themselves so that they can be used standalone.
   If the output formatter script is specified as a relative path, make
   sure to check the working directory of any IDE run configuration.
 
+* Prebuilt Binaries
+
+  Building for the desktop and MeeGo Harmattan should present no
+  problems, but the Symbian build scripts assume a non-standard style
+  of SDK installation (to support builds on Linux and Mac OS X). See
+  the =download= branch for prebuilt binaries, e.g.
+
+  - [[https://github.com/bldl/anyxporter/raw/download/anyxporter-0.01-symbian9-qt.sisx][contacts exporter for Symbian]]
+  - [[https://github.com/bldl/anyxporter/raw/download/anyxporter_0.01_armel.deb][contacts exporter for Harmattan]]
