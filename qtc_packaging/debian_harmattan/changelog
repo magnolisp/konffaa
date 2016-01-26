@@ -1,6 +1,0 @@
-anyxporter (0.01) unstable; urgency=low
-
-  * Implement basic exporting framework, and add Qt Mobility based
-    contact data export support, with XML-based export format.
-
- -- Tero Hasu <tero.hasu@ii.uib.no>  Fri, 12 Apr 2013 11:21:27 +0200
