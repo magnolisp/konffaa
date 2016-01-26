@@ -19,9 +19,6 @@
 (define* (true? x)
   (and x #t))
 
-(define* (symbol<? s1 s2)
-  (string<? (symbol->string s1) (symbol->string s2)))
-
 (define* (symbol-sort lst)
   (sort lst symbol<?))
 

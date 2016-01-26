@@ -2,16 +2,16 @@
 
 #|
 
-A configuration tool. Derived from ContextLogger2's Konffaile tool.
+A configuration manager. Derived from ContextLogger2's Konffaile tool.
 
 |#
 
-(require "axiom.rkt")
-(require "class-attr.rkt")
-(require "util.rkt")
-(require "variant.rkt")
-(require "writer.rkt")
-(require racket/cmdline)
+(require racket/cmdline
+         "axiom.rkt"
+         "class-attr.rkt"
+         "util.rkt"
+         "variant.rkt"
+         "writer.rkt")
 
 ;; --------------------------------------------------
 ;; variant management
@@ -56,21 +56,18 @@ A configuration tool. Derived from ContextLogger2's Konffaile tool.
 
 (define (write-variant-config varinfo)
   (let ((attrs (object-attr-values/sorted varinfo)))
-    ;;(pretty-nl attrs)
     (write-c-file c-config-file attrs)
     (write-ruby-file ruby-config-file attrs)
     (write-gmake-file gmake-config-file attrs)
-    (write-qmake-file qmake-config-file attrs)
-    ))
+    (write-qmake-file qmake-config-file attrs)))
 
 ;; --------------------------------------------------
 ;; main
 ;; --------------------------------------------------
 
-(define* (main . argv)
+(module* main #f
   (define vararg
     (command-line
-     #:argv argv
      #:args (config_name) config_name))
 
   (define-values (varname varfile)
