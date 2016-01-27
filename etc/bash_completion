@@ -1,0 +1,10 @@
+list_variants() {
+  ls -1 variants | grep -ho '^.*[.]var[.]rkt$' | sed 's/.var.rkt$//' | grep -hvx current
+}
+_konffaa() {
+  local cur=${COMP_WORDS[COMP_CWORD]}
+  local variants=$(list_variants)
+  COMPREPLY=($(compgen -W '${variants[@]}' -- "$cur"))
+  return 0
+}
+complete -o default -o nospace -F _konffaa konffaa
