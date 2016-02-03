@@ -14,10 +14,10 @@ which we call attributes.
 
 To avoid duplication in specifications, inheritance is supported.
 (For this we use the built-in PLT Scheme OO facility.) Each variant
-spec should be an instance of a subclass of variant%. Macros are
+spec should be an instance of a subclass of `variant%`. Macros are
 provided for making it easier to define such subclasses.
 
-If you forget to invoke 'super-instantiate' or 'super-new' in you
+If you forget to invoke 'super-instantiate' or 'super-new' in your
 'variant%' subclass, you will get a descriptive error message upon
 instantiation attempt.
 
@@ -47,8 +47,7 @@ instantiation attempt.
     ;; Note, though, that these attributes can still be overridden
     ;; with .attr methods.
     (define/public (get-attrs)
-      #hasheq())
-    ))
+      #hasheq())))
 
 (define-syntax* variant-class
   (syntax-rules ()
