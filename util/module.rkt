@@ -1,5 +1,7 @@
 #lang racket/base
 
+(require racket/stxparam)
+
 (provide define* define-syntax*)
 
 (define-syntax define*
@@ -36,10 +38,28 @@
        (provide name)))))
 
 (define-syntax-rule*
+  (define-id-syntax name pat)
+  (define-syntax name
+    (syntax-id-rules (name)
+      [name pat])))
+
+(define-syntax-rule*
+  (define-id-syntax* name pat)
+  (begin
+    (define-id-syntax name pat)
+    (provide name)))
+
+(define-syntax-rule*
   (define-values* (n ...) vals)
   (begin
     (define-values (n ...) vals)
     (provide n ...)))
+
+(define-syntax-rule*
+  (define-syntax-parameter* id e)
+  (begin
+    (define-syntax-parameter id e)
+    (provide id)))
 
 ;; Note that 'struct*' is already defined in 'racket'.
 (define-syntax-rule*

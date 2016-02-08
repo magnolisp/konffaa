@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 #|
 
@@ -8,78 +8,68 @@ Defines an internal representation for configuration information.
 
 (require "util.rkt")
 
-(define-struct* Variant
+(define-struct* VarCls
   (name ;; variant name
-   bases ;; base variants, in order
-   attrs ;; attributes (values or functions)
+   bases ;; base classes
+   ctor) ;; constructor function (not for bases)
+  #:transparent)
+
+(define-struct* VarObj
+  (class ;; variant class
+   attrs ;; attributes (functions)
    axioms ;; axioms (functions)
    cache) ;; attribute values
   #:transparent)
 
-(define* (make-Variant name bases)
-  (Variant name bases (make-hasheq) (make-hasheq) (make-hasheq)))
+(define (run-ctors class obj)
+  (define (run class)
+    (for ((base (in-list (reverse (VarCls-bases class)))))
+      (run base))
+    (define ctor (VarCls-ctor class))
+    (ctor obj))
+  (run class))
 
-(struct NF ()) ;; not found
+(define* (make-VarObj class)
+  (define obj (VarObj class (make-hasheq) (make-hasheq) (make-hasheq)))
+  (run-ctors class obj)
+  (unless (hash-empty? (VarObj-cache obj))
+    (error 'make-VarObj "unexpected early cache updates detected"))
+  obj)
 
-(define (lookup vrnt name)
-  (define attrs (Variant-attrs vrnt))
-  (cond
-    [(hash-has-key? attrs name)
-     (hash-ref attrs name)]
-    [else
-     (let loop ((bases (Variant-bases vrnt)))
-       (cond
-         [(null? bases) (NF)]
-         [else
-          (let ((base (car bases))
-                (bases (cdr bases)))
-            (define val (lookup base name))
-            (cond
-              [(not (NF? val))
-               val]
-              [else
-               (loop bases)]))]))]))
+(define* (has-attr? obj name)
+  (hash-has-key? (VarObj-attrs obj) name))
 
-(define (default-nf vrnt name)
-  (error 'get-attr! "no attribute ~a for variant ~a"
-         name (Variant-name vrnt)))
+(define (default-nf obj name)
+  (define class (VarObj-class obj))
+  (define vname (VarCls-name class))
+  (error 'get-attr! "no attribute ~a for variant ~a" name vname))
 
-(define (postprocess-attr val)
-  (if (procedure? val)
-      (val)
-      val))
-
-(define* (get-attr! vrnt name [not-found default-nf])
-  (let ((cache (Variant-cache vrnt)))
+(define* (get-attr! obj name [not-found default-nf])
+  (let ((cache (VarObj-cache obj)))
     (cond
       [(hash-has-key? cache name)
        (hash-ref cache name)]
       [else
-       (define val (lookup vrnt name))
-       (cond
-         [(NF? val)
-          (not-found vrnt name)]
-         [else
-          (let ((val (postprocess-attr val)))
-            (hash-set! cache name val)
-            val)])])))
+       (define attrs (VarObj-attrs obj))
+       (define compute (hash-ref attrs name not-found))
+       (define v (compute))
+       (hash-set! cache name v)
+       v])))
 
-(define (get-all! vrnt get post cache)
-  (for ([(k v) (get vrnt)])
+(define (get-all! obj get post cache)
+  (for ([(k v) (get obj)])
     (unless (hash-has-key? cache k)
       (let ((v (post v)))
         (hash-set! cache k v))))
-  (for ([base (Variant-bases vrnt)])
-    (get-all! base get post cache))
   cache)
 
-(define* (get-all-attrs! vrnt)
-  (let ((cache (Variant-cache vrnt)))
-    (get-all! vrnt Variant-attrs postprocess-attr cache)))
+(define* (get-all-attrs! obj)
+  (let ((cache (VarObj-cache obj)))
+    (get-all! obj VarObj-attrs (lambda (v) (v)) cache)))
 
-(define* (get-all-axioms vrnt)
+(define* (get-all-axioms obj)
   (let ((cache (make-hasheq)))
-    (get-all! vrnt Variant-axioms identity cache)))
+    (get-all! obj VarObj-axioms (lambda (v) v) cache)))
 
 #|
 
