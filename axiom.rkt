@@ -1,23 +1,17 @@
-#lang racket
+#lang racket/base
 
 #|
 
-At the lowest levels of abstraction you may use (call-method object
-method-name) to test an axiom. We also build a basic testing facility
-on top. We do not use 'rackunit' for testing, as it does not appear
-designed to deal with tests as values, which we may want to do here.
-We also do not require "expect" type statements, as configuration
-axioms deal with relations.
-
-In some cases, instead of axioms, you may want to simply declare
-attribute getters as final to ensure they always have a certain kind
-of value for a given subset of configurations. Then already any
-attempt to override will cause an error, even before we get to
-testing.
+At the lowest levels of abstraction you may simply call an axiom to
+test it. We also build a basic testing facility on top. We do not use
+'rackunit' for testing, as it does not appear designed to deal with
+tests as values, which we may want to do here. We also do not
+require "expect" type statements, as configuration axioms deal with
+relations.
 
 |#
 
-(require "util.rkt")
+(require "ir.rkt" "util.rkt" racket/list)
 
 ;;; 
 ;;; axiom implementation
@@ -42,92 +36,11 @@ testing.
       (not (or x y))))
 
 ;;; 
-;;; axiom declaration sugar
+;;; axiom-based testing
 ;;; 
-
-(begin-for-syntax
- (require racket/syntax)
- (define (make-axiom-method-id ctx an-stx)
-   (format-id ctx #:source an-stx
-              "~a.axiom" (syntax-e an-stx))))
-
-(define-syntax-rule
-  (sub-define-axiom kind name e ...)
-  (begin
-    (define name (lambda () e ...))
-    (kind name)))
-
-;; E.g.
-;; (define-axiom public it-holds (assert ...))
-;; (define-axiom override it-holds (assert ...))
-;; (define-axiom public-final it-holds (assert ...))
-;; (define-axiom override-final it-holds (assert ...))
-(define-syntax* (define-axiom stx)
-  (syntax-case stx ()
-    ((_ kind an e ...)
-     (identifier? #'an)
-     (let ((mn (make-axiom-method-id stx #'an)))
-       #`(sub-define-axiom kind #,mn e ...)))))
-
-;; For defining alternative syntax for axiom declarations.
-(define-for-syntax (make-define-axiom kind-stx)
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ an e ...)
-       (identifier? #'an)
-       (let ((mn (make-axiom-method-id stx #'an)))
-         #`(sub-define-axiom #,kind-stx #,mn e ...))))))
-
-(define-syntax* introduce-axiom
-  (make-define-axiom #'public))
-
-(define-syntax* override-axiom
-  (make-define-axiom #'override))
-
-(define-syntax* introduce-axiom/final
-  (make-define-axiom #'public-final))
-
-(define-syntax* override-axiom/final
-  (make-define-axiom #'override-final))
-
-;;; 
-;;; testing
-;;; 
-
-;; symbol -> symbol
-(define (to-method-name axiom-name)
-  (string->symbol
-   (string-append (symbol->string axiom-name) ".axiom")))
-
-(define axiom-method-name-re #rx"^(.*)[.]axiom$")
-
-;; object -> [(axiom-name method-name)]
-(define (object-axioms/list object)
-  (let ((mnames (interface->method-names (object-interface object))))
-    (for/fold
-     ((res '()))
-     ((mname mnames))
-     (if-let m (regexp-match axiom-method-name-re (symbol->string mname))
-             (cons (list (string->symbol (second m)) mname) res)
-             res))))
-
-;; object -> [(axiom-name method-name)]
-(define (object-axioms/list/sorted object)
-  (define lst (object-axioms/list object))
-  (sort lst symbol<? #:key first))
-
-;; object -> {axiom-name : method-name}
-(define (object-axioms/hash object)
-  (foldl
-   (lambda (x res)
-     (define k (first x))
-     (define v (second x))
-     (hash-set res k v))
-   #hasheq()
-   (object-axioms/list object)))
 
 (define* (run-axiom-based-tests object suite-desc)
-  (define axioms (object-axioms/list/sorted object))
+  (define axioms (sort-attrs (get-all-axioms object)))
   (define num-all (length axioms))
   (define num-failed 0)
   (for-each
@@ -144,7 +57,7 @@ testing.
                        (or
                         (assertion-failed-m ex)
                         (assertion-failed-f ex))))))
-       (call-method object mn)))
+       (mn)))
    axioms)
   (when (> num-failed 0)
     (printfln "there are ~a (of ~a) untrue axioms in ~a"

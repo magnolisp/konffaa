@@ -1,9 +1,10 @@
-#lang racket
+#lang racket/base
 
 #|
 |#
 
-(require "module.rkt")
+(require (for-syntax racket/base)
+         "module.rkt")
 
 (define-syntax-rule* (if-not c t e)
   (if (not c) t e))

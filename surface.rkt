@@ -25,13 +25,14 @@ decreasing priority order.
 (define-syntax-parameter* self
   (syntax-rules ()))
 
+(define-syntax-rule* ($ name)
+  (get-attr! self 'name))
+
 (define-syntax* (define-attribute stx)
   (syntax-parse stx
     [(_ name:id v:expr ...+)
      #'(begin
-         (define-syntax name
-           (syntax-id-rules (name)
-             [name (get-attr! self 'name)]))
+         (define-id-syntax name (get-attr! self 'name))
          (hash-set! (VarObj-attrs self) 'name (lambda () v ...)))]))
 
 (define-syntax* (define-axiom stx)
@@ -66,8 +67,6 @@ decreasing priority order.
      #'(begin
          (define-variant name (base ...) body ...)
          (provide name (rename-out [name main-name])))]))
-
-(define-struct* hexnum (num))
 
 (define* (class-all-attrs cls)
   (define obj

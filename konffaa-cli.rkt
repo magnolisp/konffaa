@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 #|
 
@@ -6,11 +6,10 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
 
 |#
 
-(require racket/cmdline
+(require racket/cmdline racket/list
          "axiom.rkt"
-         "class-attr.rkt"
+         "ir.rkt"
          "util.rkt"
-         "variant.rkt"
          "writer.rkt")
 
 ;; --------------------------------------------------
@@ -55,7 +54,7 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
 (define ruby-config-file (build-path src-dir "current_config.rb"))
 
 (define (write-variant-config varinfo)
-  (let ((attrs (object-attr-values/sorted varinfo)))
+  (let ((attrs (sort-attrs (get-all-attrs! varinfo))))
     (write-c-file c-config-file attrs)
     (write-ruby-file ruby-config-file attrs)
     (write-gmake-file gmake-config-file attrs)
@@ -76,10 +75,7 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
   (let* ((varinfo-class (dynamic-require
                          (path->string varfile)
                          'klass%))
-         (varinfo (make-object varinfo-class))
-         (set-name (class-field-mutator variant% name)))
-    (set-name varinfo (string->symbol varname))
-
+         (varinfo (make-VarObj varinfo-class #:name varname)))
     (run-axiom-based-tests varinfo varname)
 
     (write-variant-config varinfo)

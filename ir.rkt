@@ -16,6 +16,7 @@ Defines an internal representation for configuration information.
 
 (define-struct* VarObj
   (class ;; variant class
+   name ;; file basename or class name
    attrs ;; attributes (functions)
    axioms ;; axioms (functions)
    cache) ;; attribute values
@@ -29,8 +30,11 @@ Defines an internal representation for configuration information.
     (ctor obj))
   (run class))
 
-(define* (make-VarObj class)
-  (define obj (VarObj class (make-hasheq) (make-hasheq) (make-hasheq)))
+(define (default-name class)
+  (symbol->string (VarCls-name class)))
+
+(define* (make-VarObj class #:name [name (default-name class)])
+  (define obj (VarObj class name (make-hasheq) (make-hasheq) (make-hasheq)))
   (run-ctors class obj)
   (unless (hash-empty? (VarObj-cache obj))
     (error 'make-VarObj "unexpected early cache updates detected"))
@@ -42,7 +46,8 @@ Defines an internal representation for configuration information.
 (define (default-nf obj name)
   (define class (VarObj-class obj))
   (define vname (VarCls-name class))
-  (error 'get-attr! "no attribute ~a for variant ~a" name vname))
+  (error 'get-attr! "no attribute ~a for variant ~a"
+         name (VarObj-name obj)))
 
 (define* (get-attr! obj name [not-found default-nf])
   (let ((cache (VarObj-cache obj)))
@@ -70,6 +75,10 @@ Defines an internal representation for configuration information.
 (define* (get-all-axioms obj)
   (let ((cache (make-hasheq)))
     (get-all! obj VarObj-axioms (lambda (v) v) cache)))
+
+(define* (sort-attrs h)
+  (let* ((lst (hash-map h (lambda (k v) (list k v)))))
+    (sort lst symbol<? #:key car)))
 
 #|
 

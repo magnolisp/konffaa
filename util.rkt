@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 (require "util/module.rkt")
 (provide (all-from-out "util/module.rkt"))
@@ -24,26 +24,6 @@
 
 (define* (sublist? s lst)
   (true? (andmap (lambda (x) (memq x lst)) s)))
-
-;;; 
-;;; class metaprogramming
-;;; 
-
-(define* (has-method? object method-name)
-  (method-in-interface? method-name (object-interface object)))
-
-(define-syntax* respond-to?
-  (syntax-rules ()
-    ((_ obj meth)
-     (has-method? obj (quote meth)))))
-
-;; This trick for invoking a method by name (a symbol, not literal)
-;; comes from:
-;; http://list.cs.brown.edu/pipermail/plt-scheme/2007-February/016557.html
-;; Only works for methods without arguments.
-(define* (call-method object method-name)
-  (define f (make-generic (object-interface object) method-name))
-  (send-generic object f))
 
 #|
 

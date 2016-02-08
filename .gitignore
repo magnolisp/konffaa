@@ -16,3 +16,4 @@ source_list.*
 moc_*.cpp
 outfile
 build/
+retired/

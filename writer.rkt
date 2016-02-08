@@ -1,11 +1,15 @@
-#lang racket
+#lang racket/base
 
 #|
 |#
 
-(require "class-attr.rkt")
-(require "util.rkt")
-(require "variant.rkt")
+(require (for-syntax racket/base)
+         racket/function
+         racket/list
+         racket/port
+         racket/string
+         "attribute.rkt"
+         "util.rkt")
 
 ;; --------------------------------------------------
 ;; generic utilities
@@ -104,39 +108,37 @@
    "__"
    ))
 
-(define ident-censor-re #rx"[-]")
+(define (ident-sanitize a-s)
+  (define s a-s)
+  (set! s (regexp-replace* #rx"^[-]" s "_"))
+  (when-let r (regexp-match #rx"^(.*)[?]$" s)
+    (set! s (string-append "is_" (second r))))
+  (set! s (regexp-replace* #rx"^[^a-zA-Z_]+" s ""))
+  (set! s (regexp-replace* #rx"[^a-zA-Z0-9_]+" s ""))
+  (when (string=? s "")
+    (raise-argument-error 'ident-sanitize "emittable name" a-s))
+  s)
 
 (define* (name-to-c sym)
   (string->symbol
-   (string-append
-    ;;"__"
-    (string-upcase
-     (regexp-replace* ident-censor-re (symbol->string sym) "_"))
-    ;;"__"
-    )))
+   (string-upcase
+    (ident-sanitize (symbol->string sym)))))
 
 (define* (name-to-ruby sym)
   (string->symbol
    (string-append
     "$"
     (string-upcase
-     (regexp-replace* ident-censor-re (symbol->string sym) "_"))
-    )))
+     (ident-sanitize (symbol->string sym))))))
 
 (define* (name-to-gmake sym)
-  (string->symbol
-   (string-append
-    (string-upcase
-     (regexp-replace* ident-censor-re (symbol->string sym) "_"))
-    )))
+  (name-to-c sym))
 
 (define* (name-to-gmake/negate sym)
   (string->symbol
    (string-append
     "NOT__"
-    (string-upcase
-     (regexp-replace* ident-censor-re (symbol->string sym) "_"))
-    )))
+    (symbol->string (name-to-gmake sym)))))
 
 (define (bool-attr? attr)
   (boolean? (second attr)))

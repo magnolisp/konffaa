@@ -1,12 +1,24 @@
 #lang racket/base
 
-(require "module.rkt")
+#|
+|#
 
-(define* (printfln . args)
-  (apply printf args) (newline))
+(require "util.rkt")
 
-(define* (fprintfln out . args)
-  (apply fprintf out args) (newline out))
+(define-struct* hexnum (num))
+
+;; These values provide a way to indicate whether an attribute is
+;; defined or not, without specifying any actual value. Sometimes one
+;; only cares about whether something is defined or not -- consider
+;; #ifdef __EPOC32__.
+(define-struct attr-defined% ())
+(define-struct attr-undefined% ())
+
+(define* attr-defined (make-attr-defined%))
+(define* attr-undefined (make-attr-undefined%))
+
+(define* attr-defined? attr-defined%?)
+(define* attr-undefined? attr-undefined%?)
 
 #|
 
