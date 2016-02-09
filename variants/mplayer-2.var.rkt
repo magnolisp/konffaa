@@ -19,6 +19,10 @@
 
   (define-axiom s60-vernum-range
     (assert (>= s60-vernum #d09)))
+
+  (define-axiom s60-kit-consistency
+    (assert (or (and (< s60-vernum 30) (< kit-vernum 30))
+                (and (>= s60-vernum 30) (>= kit-vernum 30)))))
   
   ;; Music Player Remote Control API (S60)
   (define-attribute have-mplayerremotecontrol

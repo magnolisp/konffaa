@@ -26,14 +26,14 @@ decreasing priority order.
   (syntax-rules ()))
 
 (define-syntax-rule* ($ name)
-  (get-attr-or-field! self 'name))
+  (get-attr! self 'name))
 
 (define-syntax* (define-field stx)
   (syntax-parse stx
     [(_ name:id v:expr ...+)
      #'(begin
-         (define-id-syntax name (get-field! self 'name))
-         (hash-set! (VarObj-fields self) 'name (lambda () v ...)))]))
+         (define-id-syntax name (get-attr! self 'name))
+         (hash-set! (VarObj-attrs self) 'name (field-thunk v ...)))]))
 
 (define-syntax* (define-attribute stx)
   (syntax-parse stx
@@ -79,33 +79,3 @@ decreasing priority order.
   (define obj
     (make-VarObj cls))
   (get-all-attrs! obj))
-
-#|
-
-Copyright 2009-2016 Helsinki Institute for Information
-Technology (HIIT), University of Bergen, and the authors. All rights
-reserved.
-
-Authors: Tero Hasu <tero.hasu@hut.fi>
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation files
-(the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software,
-and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-|#
