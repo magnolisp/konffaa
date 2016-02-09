@@ -1,10 +1,8 @@
-#lang racket
+#lang konffaa
 
 #|
 
 |#
-
-(require konffaa/axiom konffaa/surface konffaa/util)
 
 (define-variant Project ()
   (define-attribute platform '(cxx))

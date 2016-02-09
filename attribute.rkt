@@ -20,6 +20,12 @@
 (define* attr-defined? attr-defined%?)
 (define* attr-undefined? attr-undefined%?)
 
+(define* (true? x)
+  (and x #t))
+
+(define* (sublist? s lst)
+  (true? (andmap (lambda (x) (memq x lst)) s)))
+
 #|
 
 Copyright 2009 Helsinki Institute for Information Technology (HIIT)

@@ -16,15 +16,6 @@
       (((base name dir) (split-path path)))
     name))
 
-(define* (true? x)
-  (and x #t))
-
-(define* (symbol-sort lst)
-  (sort lst symbol<?))
-
-(define* (sublist? s lst)
-  (true? (andmap (lambda (x) (memq x lst)) s)))
-
 #|
 
 Copyright 2009 Helsinki Institute for Information Technology (HIIT)
