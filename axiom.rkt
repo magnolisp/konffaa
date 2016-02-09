@@ -40,7 +40,7 @@ relations.
 ;;; 
 
 (define* (run-axiom-based-tests object suite-desc)
-  (define axioms (sort-attrs (get-all-axioms object)))
+  (define axioms (sort-hash-by-key (get-all-axioms object)))
   (define num-all (length axioms))
   (define num-failed 0)
   (for-each

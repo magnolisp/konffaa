@@ -26,7 +26,14 @@ decreasing priority order.
   (syntax-rules ()))
 
 (define-syntax-rule* ($ name)
-  (get-attr! self 'name))
+  (get-attr-or-field! self 'name))
+
+(define-syntax* (define-field stx)
+  (syntax-parse stx
+    [(_ name:id v:expr ...+)
+     #'(begin
+         (define-id-syntax name (get-field! self 'name))
+         (hash-set! (VarObj-fields self) 'name (lambda () v ...)))]))
 
 (define-syntax* (define-attribute stx)
   (syntax-parse stx

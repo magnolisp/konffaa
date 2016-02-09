@@ -6,7 +6,7 @@ Defines an internal representation for configuration information.
 
 |#
 
-(require "util.rkt")
+(require "util.rkt" racket/set)
 
 (define-struct* VarCls
   (name ;; variant name
@@ -15,68 +15,92 @@ Defines an internal representation for configuration information.
   #:transparent)
 
 (define-struct* VarObj
-  (class ;; variant class
+  (cls ;; variant class
    name ;; file basename or class name
+   fields ;; non-attribute fields (functions) 
    attrs ;; attributes (functions)
    axioms ;; axioms (functions)
    cache) ;; attribute values
   #:transparent)
 
-(define (run-ctors class obj)
-  (define (run class)
-    (for ((base (in-list (reverse (VarCls-bases class)))))
+(define (run-ctors cls obj)
+  (define (run cls)
+    (for ((base (in-list (reverse (VarCls-bases cls)))))
       (run base))
-    (define ctor (VarCls-ctor class))
+    (define ctor (VarCls-ctor cls))
     (ctor obj))
-  (run class))
+  (run cls))
 
-(define (default-name class)
-  (symbol->string (VarCls-name class)))
+(define (default-name cls)
+  (symbol->string (VarCls-name cls)))
 
-(define* (make-VarObj class #:name [name (default-name class)])
-  (define obj (VarObj class name (make-hasheq) (make-hasheq) (make-hasheq)))
-  (run-ctors class obj)
+(define* (make-VarObj cls #:name [name (default-name cls)])
+  (define obj (VarObj cls name (make-hasheq) (make-hasheq)
+                      (make-hasheq) (make-hasheq)))
+  (run-ctors cls obj)
   (unless (hash-empty? (VarObj-cache obj))
     (error 'make-VarObj "unexpected early cache updates detected"))
+  (let ((aset (list->mutable-seteq (hash-keys (VarObj-attrs obj))))
+        (fset (list->mutable-seteq (hash-keys (VarObj-fields obj)))))
+    (set-intersect! aset fset)
+    (unless (set-empty? aset)
+      (error 'make-VarObj
+             "clashing names for attributes and fields: ~s"
+             (set->list aset))))
   obj)
 
-(define* (has-attr? obj name)
+(define (not-found kind obj name)
+  (define cls (VarObj-cls obj))
+  (define vname (VarCls-name cls))
+  (error 'not-found "no ~a ~a for variant ~a"
+         kind name (VarObj-name obj)))
+
+(define (get! obj name get nf)
+  (let ((cache (VarObj-cache obj)))
+    (hash-ref! cache name
+               (lambda ()
+                 (define h (get obj))
+                 (define v (hash-ref h name nf))
+                 (v)))))
+  
+(define* (get-field! obj name
+                     [nf (lambda () (not-found "field" obj name))])
+  (get! obj name VarObj-fields nf))
+
+(define* (get-attr! obj name
+                    [nf (lambda () (not-found "attribute" obj name))])
+  (get! obj name VarObj-attrs nf))
+
+(define (has-field? obj name)
+  (hash-has-key? (VarObj-fields obj) name))
+
+(define (has-attr? obj name)
   (hash-has-key? (VarObj-attrs obj) name))
 
-(define (default-nf obj name)
-  (define class (VarObj-class obj))
-  (define vname (VarCls-name class))
-  (error 'get-attr! "no attribute ~a for variant ~a"
-         name (VarObj-name obj)))
+(define* (get-attr-or-field! obj name)
+  (cond
+    [(has-attr? obj name)
+     (get-attr! obj name)]
+    [(has-field? obj name)
+     (get-field! obj name)]
+    [else
+     (not-found "attribute or field" obj name)]))
 
-(define* (get-attr! obj name [not-found default-nf])
+(define (get-all! obj get)
   (let ((cache (VarObj-cache obj)))
-    (cond
-      [(hash-has-key? cache name)
-       (hash-ref cache name)]
-      [else
-       (define attrs (VarObj-attrs obj))
-       (define compute (hash-ref attrs name not-found))
-       (define v (compute))
-       (hash-set! cache name v)
-       v])))
+    (for/hasheq ([(k v) (get obj)])
+      (values k (hash-ref! cache k v)))))
 
-(define (get-all! obj get post cache)
-  (for ([(k v) (get obj)])
-    (unless (hash-has-key? cache k)
-      (let ((v (post v)))
-        (hash-set! cache k v))))
-  cache)
+(define* (get-all-fields! obj)
+  (get-all! obj VarObj-fields))
 
 (define* (get-all-attrs! obj)
-  (let ((cache (VarObj-cache obj)))
-    (get-all! obj VarObj-attrs (lambda (v) (v)) cache)))
+  (get-all! obj VarObj-attrs))
 
 (define* (get-all-axioms obj)
-  (let ((cache (make-hasheq)))
-    (get-all! obj VarObj-axioms (lambda (v) v) cache)))
+  (VarObj-axioms obj))
 
-(define* (sort-attrs h)
+(define* (sort-hash-by-key h)
   (let* ((lst (hash-map h (lambda (k v) (list k v)))))
     (sort lst symbol<? #:key car)))
 
