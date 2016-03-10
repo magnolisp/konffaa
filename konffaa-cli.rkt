@@ -53,8 +53,8 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
 (define qmake-config-file (build-path src-dir "current_config.pri"))
 (define ruby-config-file (build-path src-dir "current_config.rb"))
 
-(define (write-variant-config varinfo)
-  (let ((attrs (sort-hash-by-key (get-all-attrs! varinfo))))
+(define (write-variant-config attrs)
+  (let ((attrs (sort-hash-by-key attrs)))
     (write-c-file c-config-file attrs)
     (write-ruby-file ruby-config-file attrs)
     (write-gmake-file gmake-config-file attrs)
@@ -75,12 +75,14 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
   (let* ((varinfo-cls (dynamic-require
                          (path->string varfile)
                          'klass%))
-         (varinfo (make-VarObj varinfo-cls #:name varname)))
+         (varinfo (make-VarObj varinfo-cls #:name varname))
+         (attrs (let ((x (get-all-attrs! varinfo)))
+                  (hash-set x 'name varname))))
     (run-axiom-based-tests varinfo varname)
 
-    ;;(pretty-print varinfo)
+    ;;(pretty-print (list varname varinfo attrs))
 
-    (write-variant-config varinfo)
+    (write-variant-config attrs)
     (write-variant-symlink varname)
 
     (void)))
