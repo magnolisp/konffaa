@@ -6,14 +6,16 @@
 (require (for-syntax racket/base)
          racket/function
          racket/list
+         racket/match
          racket/port
          racket/string
+         racket/unit
          "attribute.rkt"
          "util.rkt")
 
-;; --------------------------------------------------
-;; generic utilities
-;; --------------------------------------------------
+;;;
+;;; generic utilities
+;;;
 
 (define-syntax on-fail
   (syntax-rules ()
@@ -71,9 +73,9 @@
      (when elemact (elemact elem)))
    lst))
 
-;; --------------------------------------------------
-;; local utilities
-;; --------------------------------------------------
+;;;
+;;; local utilities
+;;;
 
 (define (disp . args)
   (display (apply format args)))
@@ -81,9 +83,9 @@
 (define (disp-nl . args)
   (apply disp args) (newline))
 
-;; --------------------------------------------------
-;; pretty printing
-;; --------------------------------------------------
+;;;
+;;; pretty printing
+;;;
 
 (define* (display-generated-notice pfx)
   (display pfx)
@@ -298,75 +300,120 @@
       (newline)))
    ))
 
-(define* (write-c-file file attrs)
-  (let ((harness-name (path-h-ifdefy file)))
-    (write-changed-file
-     file
-     (capture
-      (display-generated-notice "//")
-      (disp-nl "#ifndef ~a" harness-name)
-      (disp-nl "#define ~a" harness-name)
-      (for-each
-       (lambda (entry)
-         (let ((name (first entry))
-               (value (second entry)))
-           (display-attr/c name value)
-           ))
-       attrs)
-      (disp-nl "#endif // ~a" harness-name)
-      ))))
+;; For convenience, we add all boolean variables (or their
+;; negations) to the CONFIG variable with the += operator.
+(define (display-qmake-bools attrs)
+  (display "CONFIG += ")
+  (for-each-sep display (thunk (display " "))
+                (bool-attrs-to-qmake-list attrs))
+  (newline))
 
-(define* (write-ruby-file file attrs)
-  (begin
-    (write-changed-file
-     file
-     (capture
-      (display-generated-notice "#")
-      (for-each
-       (lambda (entry)
-         (let ((name (first entry))
-               (value (second entry)))
-           (display-attr/ruby name value)
-           ))
-       attrs)
-      ))))
+;;; 
+;;; generic API
+;;; 
 
-(define* (write-gmake-file file attrs)
-  (begin
-    (write-changed-file
-     file
-     (capture
-      (display-generated-notice "#")
-      (for-each
-       (lambda (entry)
-         (let ((name (first entry))
-               (value (second entry)))
-           (display-attr/gmake name value)
-           ))
-       attrs)
-      ))))
+;; To define a new back end, implement the desired `lang^` as a unit,
+;; and then call `make-write-include-file` to get a code generation
+;; routine for the specified language.
+(provide (struct-out Model) lang^)
 
-(define* (write-qmake-file file attrs)
-  (begin
+(struct Model
+  (path ; path-string?
+   attrs ; (listof (list/c symbol? any/c))
+   ) #:transparent)
+
+(define-signature writer^
+  (write-file ; (-> Model? any/c)
+   ))
+
+(define-signature lang^
+  (line-comment-prefix ; string?
+   display-attr ; (-> symbol? any/c any/c)
+   display-preamble ; (-> Model? any/c)
+   display-postamble ; (-> Model? any/c)
+   ))
+
+(define-unit ruby-lang@
+  (import)
+  (export lang^)
+  (define line-comment-prefix "#")
+  (define display-attr display-attr/ruby)
+  (define display-preamble void)
+  (define display-postamble void))
+
+(define-unit gmake-lang@
+  (import)
+  (export lang^)
+  (define line-comment-prefix "#")
+  (define display-attr display-attr/gmake)
+  (define display-preamble void)
+  (define display-postamble void))
+
+(define-unit qmake-lang@
+  (import)
+  (export lang^)
+  (define line-comment-prefix "#")
+  (define display-attr display-attr/qmake)
+  (define display-preamble void)
+  (define (display-postamble m)
+    (display-qmake-bools (Model-attrs m))))
+
+(define-unit c-lang@
+  (import)
+  (export lang^)
+  (define line-comment-prefix "//")
+  (define display-attr display-attr/c)
+  (define (display-preamble m)
+    (define harness-name (path-h-ifdefy (Model-path m)))
+    (disp-nl "#ifndef ~a" harness-name)
+    (disp-nl "#define ~a" harness-name))
+  (define (display-postamble m)
+    (define harness-name (path-h-ifdefy (Model-path m)))
+    (disp-nl "#endif // ~a" harness-name)))
+
+(define-unit include-file-writer@
+  (import lang^)
+  (export writer^)
+
+  (define (write-file m)
     (write-changed-file
-     file
+     (Model-path m)
      (capture
-      (display-generated-notice "#")
-      (for-each
-       (lambda (entry)
-         (let ((name (first entry))
-               (value (second entry)))
-           (display-attr/qmake name value)
-           ))
-       attrs)
-      ;; For convenience, we add all boolean variables (or their
-      ;; negations) to the CONFIG variable with the += operator.
-      (begin
-        (display "CONFIG += ")
-        (for-each-sep display (thunk (display " "))
-                      (bool-attrs-to-qmake-list attrs))
-        (newline))
-      ))))
+      (display-file m))))
+
+  (define (display-file m)
+    (display-generated-notice line-comment-prefix)
+    (display-preamble m)
+    (display-attrs m)
+    (display-postamble m))
+
+  (define (display-attrs m)
+    (for ([entry (in-list (Model-attrs m))])
+      (match-define (list name value) entry)
+      (display-attr name value))))
+
+(define* (make-write-include-file lang@)
+  (define-compound-unit writer@
+    (import)
+    (export (tag writer^ W))
+    (link
+     [([L : lang^]) lang@]
+     [([W : writer^]) include-file-writer@ L]))
+  (define-values/invoke-unit/infer writer@)
+  (lambda (pn attrs)
+    (write-file (Model pn attrs))))
+
+(define* write-ruby-file
+  (make-write-include-file ruby-lang@))
+
+(define* write-gmake-file
+  (make-write-include-file gmake-lang@))
+
+(define* write-qmake-file
+  (make-write-include-file qmake-lang@))
+
+(define* write-c-file
+  (make-write-include-file c-lang@))
 
 #|
 
