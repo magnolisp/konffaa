@@ -6,14 +6,7 @@
 .depend
 Makefile
 local.mk
-qt.mk
-anyxporter
 current_config.*
-current.var.rkt
-source_list.*
-*.pro.user
-*.o
-moc_*.cpp
-outfile
-build/
+config.rkt
 retired/
+src/

@@ -6,7 +6,8 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
 
 |#
 
-(require racket/cmdline racket/list racket/pretty
+(require racket/cmdline racket/list
+         racket/path racket/pretty
          "axiom.rkt"
          "ir.rkt"
          "util.rkt"
@@ -39,19 +40,22 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
       (values (get-variant-name x) (build-path x))
       (values x (get-variant-file x))))
 
-(define variant-symlink-file (get-variant-file "current"))
-
-(define (write-variant-symlink varname)
-  (define file variant-symlink-file)
-  (let ((basename (get-variant-basename varname)))
-    (write-scheme-symlink file basename)))
-
 (define src-dir (build-path "src"))
 
+(define rkt-config-file (build-path src-dir "config.rkt"))
 (define c-config-file (build-path src-dir "current_config.hrh"))
 (define gmake-config-file (build-path src-dir "current_config.mk"))
 (define qmake-config-file (build-path src-dir "current_config.pri"))
 (define ruby-config-file (build-path src-dir "current_config.rb"))
+
+(define (write-variant-symlink varfile) ;; (-> path? void?)
+  (define target ;; path string relative to `rkt-config-file`
+    (path->string
+     (find-relative-path
+      (path->complete-path src-dir)
+      (path->complete-path varfile)
+      #:more-than-root? #t)))
+  (write-scheme-symlink rkt-config-file target))
 
 (define (write-variant-config attrs)
   (let ((attrs (sort-hash-by-key attrs)))
@@ -83,7 +87,7 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
     ;;(pretty-print (list varname varinfo attrs))
 
     (write-variant-config attrs)
-    (write-variant-symlink varname)
+    (write-variant-symlink varfile)
 
     (void)))
 
