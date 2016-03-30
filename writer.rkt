@@ -96,7 +96,7 @@
    file
    (capture
     (display-generated-notice ";;")
-    (displayln "#lang racket")
+    (displayln "#lang racket/base")
     (disp-nl "(require ~s)" target)
     (disp-nl "(provide (all-from-out ~s))" target))))
 
@@ -234,6 +234,17 @@
       (newline)))
    ))
 
+(define* (display-attr/rkt name value)
+  (cond
+   [(attr-undefined? value)
+    (void)]
+   [else
+    (display "(define ")
+    (print name (current-output-port) 1)
+    (display " ")
+    (print value (current-output-port) 0)
+    (displayln ")")]))
+
 (define* (display/gmake value)
   (cond
    ((or (attr-defined? value) (eqv? value #t))
@@ -358,6 +369,16 @@
   (define (display-postamble m)
     (display-qmake-bools (Model-attrs m))))
 
+(define-unit rkt-lang@
+  (import)
+  (export lang^)
+  (define line-comment-prefix ";;")
+  (define display-attr display-attr/rkt)
+  (define (display-preamble m)
+    (displayln "#lang racket/base")
+    (displayln "(provide (all-defined-out))"))
+  (define display-postamble void))
+
 (define-unit c-lang@
   (import)
   (export lang^)
@@ -414,6 +435,9 @@
 
 (define* write-c-file
   (make-write-include-file c-lang@))
+
+(define* write-rkt-file
+  (make-write-include-file rkt-lang@))
 
 #|
 

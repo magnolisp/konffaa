@@ -42,23 +42,25 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
 
 (define src-dir (build-path "src"))
 
+(define rkt-link-file (build-path src-dir "config-spec.rkt"))
 (define rkt-config-file (build-path src-dir "config.rkt"))
 (define c-config-file (build-path src-dir "current_config.hrh"))
 (define gmake-config-file (build-path src-dir "current_config.mk"))
 (define qmake-config-file (build-path src-dir "current_config.pri"))
 (define ruby-config-file (build-path src-dir "current_config.rb"))
 
-(define (write-variant-symlink varfile) ;; (-> path? void?)
-  (define target ;; path string relative to `rkt-config-file`
+(define (write-variant-link varfile) ;; (-> path? void?)
+  (define target ;; path string relative to `rkt-link-file`
     (path->string
      (find-relative-path
       (path->complete-path src-dir)
       (path->complete-path varfile)
       #:more-than-root? #t)))
-  (write-scheme-symlink rkt-config-file target))
+  (write-scheme-symlink rkt-link-file target))
 
 (define (write-variant-config attrs)
   (let ((attrs (sort-hash-by-key attrs)))
+    (write-rkt-file rkt-config-file attrs)
     (write-c-file c-config-file attrs)
     (write-ruby-file ruby-config-file attrs)
     (write-gmake-file gmake-config-file attrs)
@@ -87,7 +89,7 @@ A configuration manager. Derived from ContextLogger2's Konffaile tool.
     ;;(pretty-print (list varname varinfo attrs))
 
     (write-variant-config attrs)
-    (write-variant-symlink varfile)
+    (write-variant-link varfile)
 
     (void)))
 
