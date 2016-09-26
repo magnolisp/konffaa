@@ -3,10 +3,7 @@
 .\#*
 *.swp
 .DS_Store
-.depend
-Makefile
 local.mk
-current_config.*
-config.rkt
-retired/
+compiled/
 src/
+/doc/

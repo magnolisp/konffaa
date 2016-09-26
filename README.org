@@ -1,11 +1,8 @@
 Konffaa, a lightweight configuration manager originally created for
 the ContextLogger2 project.
 
-The idea is simple: you choose a single configuration (from under a
-"variants" directory), passing its filename on the command line. The
-=konffaa= program will then proceed to generate a bunch of include
-files that reflect the configuration. The include files are only
-touched when they actually change as a result of the change in
-configuration; this is to allow Konffaa to better work with build
-managers (such as Make) whose dependency checking is based on
-timestamps.
+Konffaa includes a =konffaa= command-line program and a =konffaa=
+language. The former is invoked with a variant specification expressed
+in the latter, and include files reflecting the chosen variant are
+then generated in a variety of languages, for interoperability with
+different build managers and scripts.
