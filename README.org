@@ -6,3 +6,5 @@ language. The former is invoked with a variant specification expressed
 in the latter, and include files reflecting the chosen variant are
 then generated in a variety of languages, for interoperability with
 different build managers and scripts.
+
+Some details can be found in the [[http://magnolisp.github.io/konffaa/][manual]].

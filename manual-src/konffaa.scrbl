@@ -73,7 +73,7 @@ Completion of variant names based on the @filepath{.var.rkt} suffixed files foun
 
 Except where otherwise noted, the following license applies:
 
-Copyright © 2009-2016 Helsinki Institute for Information
+Copyright © 2009--2016 Helsinki Institute for Information
 Technology HIIT, University of Bergen, and the authors.
 
 Authors: Tero Hasu
