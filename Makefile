@@ -1,6 +1,8 @@
 PKGNAME := konffaa
 VERSION :=
 DISTSUFFIX := $(and $(VERSION),-$(VERSION))
+DISTNAME := $(PKGNAME)$(DISTSUFFIX)
+DISTHOME := $(PWD)/dist
 
 default : setup
 
@@ -21,6 +23,17 @@ clean :
 
 check-pkg-deps :
 	raco setup --check-pkg-deps $(PKGNAME)
+
+MIRROR_DIR := /tmp/raco-tmp/$(PKGNAME)
+
+# this indirection ensures that we only get what we would have in a Git repo
+# (using 'git archive' would be more straightforward, but for future proofing)
+pkg :
+	-mkdir $(DISTHOME)
+	-rm -r $(MIRROR_DIR)
+	mkdir -p $(MIRROR_DIR)
+	cp -ai ./ $(MIRROR_DIR)/
+	( cd $(MIRROR_DIR) && git clean -dxff && rm -rf $(MIRROR_DIR)/.git && raco pkg create --format tgz --dest $(DISTHOME) --from-dir $(MIRROR_DIR) )
 
 gh-homepage :
 	( cd gh-pages && git clean -d -f && git rm --ignore-unmatch -rf . )
